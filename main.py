@@ -262,7 +262,7 @@ XN032,格罗之石的真正力量,"格罗之石除了定位龙金外，是否还
 """ # 悬念 CSV 数据 -  请替换成你提供的完整悬念 CSV 数据
 
 
-@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.6", author="AI & KirifujiNagisa") # 更新版本号
+@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.7", author="AI & KirifujiNagisa") # 更新版本号
 class DnDInfoPlugin(BasePlugin):
 
     def __init__(self, host: APIHost):
@@ -370,12 +370,20 @@ class DnDInfoPlugin(BasePlugin):
             return None
         return random.choice(self.suspenses)
 
-    def _find_suspense_by_name(self, suspense_name): # 新增函数：根据悬念名称查找悬念信息
-        """根据悬念名称查找悬念信息，返回悬念字典或 None"""
+    def _find_suspense_by_name(self, suspense_name):
+        """根据悬念名称查找悬念信息，返回悬念字典或 None (位置标识，请保持你的完整函数)"""
         for suspense_data in self.suspenses:
             if suspense_data.get('悬念名称', '').strip() == suspense_name.strip():
                 return suspense_data
         return None
+
+    def _find_event_by_name(self, event_name): # 新增函数：根据事件名称查找事件信息
+        """根据事件名称查找事件信息，返回事件字典或 None"""
+        for event_data in self.events:
+            if event_data.get('事件名称', '').strip() == event_name.strip():
+                return event_data
+        return None
+
 
     def _format_character_info(self, char_info):
         """格式化角色信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
@@ -392,7 +400,7 @@ class DnDInfoPlugin(BasePlugin):
         return "\n".join(info_lines)
 
     def _format_suspense_info(self, suspense_info):
-        """格式化悬念信息为易于阅读的字符串"""
+        """格式化悬念信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
         if not suspense_info:
             return "未找到该悬念信息。"
 
@@ -414,7 +422,7 @@ class DnDInfoPlugin(BasePlugin):
         return "\n- " + "\n- ".join(event_names)
 
     def _format_suspense_list(self):
-        """格式化悬念列表为易于阅读的字符串 (可选)"""
+        """格式化悬念列表为易于阅读的字符串 (可选) (位置标识，请保持你的完整函数)"""
         if not self.suspenses:
             return "悬念列表为空。"
         suspense_names = [suspense['悬念名称'] for suspense in self.suspenses]
@@ -475,33 +483,36 @@ class DnDInfoPlugin(BasePlugin):
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
-        elif msg.startswith(".查询事件"): # 可选：添加 .查询事件 命令 (如果需要按名称查询事件)
+        elif msg.startswith(".查询事件"): #  实现 .查询事件 命令 (这次是真的！)
             event_name = msg[len(".查询事件"):].strip()
             if not event_name:
                 reply = "请在 `.查询事件` 命令后输入要查询的事件名称，例如：`.查询事件 降龙节遇袭`"
             else:
-                #  (这里可以实现 _find_event_by_name 函数，如果需要按事件名称查询)
-                reply = "`.查询事件` 功能暂未实现，敬请期待！" #  或者你可以实现一个 _find_event_by_name 函数
+                event_info = self._find_event_by_name(event_name) # 调用 _find_event_by_name 函数
+                if event_info:
+                    reply = self._format_event_info(event_info) # 格式化事件信息
+                else:
+                    reply = f"未找到名为 \"{event_name}\" 的事件。" # 事件未找到的提示
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
         elif msg == ".列出事件名单": # 可选：添加 .列出事件名单 命令 (如果需要列出所有事件)
             reply = self._format_event_list()
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
-        elif msg == ".列出悬念名单": #  列出悬念名单命令保持启用
+        elif msg == ".列出悬念名单":
             reply = self._format_suspense_list()
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
-        elif msg.startswith(".查询悬念"): #  实现 .查询悬念 命令
+        elif msg.startswith(".查询悬念"):
             suspense_name = msg[len(".查询悬念"):].strip()
             if not suspense_name:
                 reply = "请在 `.查询悬念` 命令后输入要查询的悬念名称，例如：`.查询悬念 颅骨岛的珊娜萨余党`"
             else:
-                suspense_info = self._find_suspense_by_name(suspense_name) # 调用 _find_suspense_by_name 函数
+                suspense_info = self._find_suspense_by_name(suspense_name)
                 if suspense_info:
-                    reply = self._format_suspense_info(suspense_info) # 格式化悬念信息
+                    reply = self._format_suspense_info(suspense_info)
                 else:
-                    reply = f"未找到名为 \"{suspense_name}\" 的悬念。" #  悬念未找到的提示
+                    reply = f"未找到名为 \"{suspense_name}\" 的悬念。"
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
