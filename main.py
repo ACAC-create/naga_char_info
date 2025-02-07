@@ -224,12 +224,51 @@ LY028, 深水城的冬天,"深水城出现了异常的寒冷天气，可能与�
 """ # 事件 CSV 数据，完整数据请替换成你提供的完整 CSV 数据
 
 
-@register(name="DnDInfoPlugin", description="DnD 角色和事件信息查询插件", version="1.4", author="AI & KirifujiNagisa") # 更新插件名称和版本号
-class DnDInfoPlugin(BasePlugin): # 更新插件类名
+
+SUSPENSE_CSV_DATA = """悬念ID,悬念名称,悬念描述,相关线索,可能答案/方向
+悬念ID,悬念名称,悬念描述,相关线索,可能答案/方向
+XN001,颅骨岛的珊娜萨余党,"颅骨岛上仍有珊娜萨公会的残余势力，需要被驱逐。他们的具体兵力部署、防御工事、以及可能的反击计划尚不明确。",待处理事件-颅骨岛的前线哨站建立, 珊娜萨公会, 颅骨岛, 攻城弩, 吊桥, 地道？, 鼠人掩护？, 是否与无形之主有关？
+XN002,谁将成为我们的军队？,"要建立颅骨岛前线哨站，需要一支军队。目前不清楚军队的具体构成，以及如何招募和指挥这支军队。",待处理事件-颅骨岛的前线哨站建立, 地精盟友, 灰手小队, 领主联盟？, 竖琴手同盟？, 招募费用？, 指挥权归属？
+XN003,黑杖的不对劲之处？,"黑杖瓦婕拉·黑杖在某些方面显得不对劲，但具体是什么原因尚不清楚。可能与法术瘟疫、曼松事件、或黑杖本身有关。",待处理事件-颅骨岛的前线哨站建立, 黑杖, 瓦婕拉·黑杖, 法术瘟疫, 曼松, 黑杖的诅咒？, 灵魂影响？
+XN004,里提斯·阿拉布兰特背后的故事,"里提斯·阿拉布兰特的身世复杂，与维吉尼亚·阿拉布兰特有关。需要进一步调查他的过去，包括他与阿拉布兰特家族的关系，以及他被处决和复活的真相。",待处理事件-里提斯·阿拉布兰特背后的故事, 蓝宝石吊坠, 维尼吉亚·阿拉布兰特, 阿拉布兰特家族, 死刑, 复活, 罗兹纳家族的书
+XN005,维尼吉亚的真实目的,"女魔鬼维尼吉亚·阿拉布兰特的目的是什么？她复活PC们的动机，以及她与阿斯蒙蒂斯的关系仍是谜团。她提到的糖果屋（斯特罗姆科伦多）的具体位置和用途不明。",待处理事件-女魔鬼维尼吉亚, 女魔鬼, 维吉尼亚·阿拉布兰特, 阿斯蒙蒂斯, 糖果屋, 斯特罗姆科伦多, 童谣传播, 复活动机, 糖果屋用途
+XN006,童谣的传播者是谁？,"在深水城平民区传播童谣的神秘“漂亮姐姐”是谁？她传播童谣的目的，以及童谣与蓝焰危机的联系尚不清楚。",待处理事件-女魔鬼维尼吉亚, 童谣, 漂亮姐姐, 糖果屋, 蓝焰危机, 传播目的, 身份不明
+XN007,失踪的邦妮,"哈欠门酒馆的女招待邦妮被珊娜萨绑架，她的生死未卜。需要调查她的下落和珊娜萨绑架她的原因。",待处理事件-女魔鬼维尼吉亚, 邦妮, 珊娜萨公会, 绑架, 生死未卜, 绑架原因
+XN008,威尔玛的下落和赌博诱因,"福卢恩的父亲威尔玛失踪，他赌博成瘾的诱因尚不明确。可能与散塔林会或其他人有关。",待处理事件-女魔鬼维吉尼亚, 威尔玛, 福卢恩, 赌博, 失踪, 散塔林会？, 幕后黑手？
+XN009,格罗之石的下落,"格罗之石在达米拉死后下落不明。珊娜萨公会和达耶特佣兵团都曾觊觎格罗之石，其最终归属和用途仍是谜团。",待处理事件-格罗之石的下落, 格罗之石, 珊娜萨公会, 达耶特佣兵团, 下落不明, 用途未知
+XN010,无形之主如何运作？,"无形之主作为一个神秘组织，其运作方式、目的、以及与夺心魔的关系尚不清晰。需要进一步调查其背后的真相。",待处理事件-无形之主, 无形之主, 夺心魔, 运作方式, 组织目的, 幕后主使
+XN011,卓尔和夺心魔的关系,"艾凡德家族的卓尔与夺心魔之间存在合作关系，但具体合作内容和目的尚不明确。泽瑞斯·艾梵德与萨尔方提斯的关系也需要进一步调查。",待处理事件-卓尔和夺心魔, 卓尔, 夺心魔, 艾凡德家族, 泽瑞斯·艾梵德, 萨尔方提斯, 合作目的, 合作内容
+XN012,泽瑞斯是本体还是克隆体？,"在火山深处遇到的泽瑞斯·艾梵德，其身份是本体还是克隆体尚不确定。这关系到其背后的势力和计划。",待处理事件-卓尔和夺心魔, 泽瑞斯·艾梵德, 克隆体, 本体, 真假难辨,  幕后势力
+XN013,丢失的灵魂石,"费尔南斯丢失的灵魂石，以及变成邪魔的影响仍是未知数。灵魂石的下落和丢失原因需要调查。",待办事项-f2-变成邪魔的影响，丢失的灵魂石, 费尔南斯, 灵魂石, 邪魔, 丢失原因, 下落不明, 后续影响
+XN014,扁钱包巷的房子,"扁钱包巷的房子仍然空置，其装修和用途尚未决定。",待办事项-f2-扁钱包巷的房子, 扁钱包巷, 房子, 空置, 装修, 用途
+XN015,南城的动物园,"南城的动物园情况不明，是否值得一去？",待办事项-南城的动物园, 南城, 动物园, 状况不明, 价值待定
+XN016,装修巨魔颅骨大宅,"巨魔颅骨大宅的装修计划尚未启动，酒馆和客房的装修方案和预算需要确定。",待办事项-装修巨魔颅骨大宅，酒馆+客房, 巨魔颅骨大宅, 装修, 酒馆, 客房, 预算, 方案
+XN017,萨梅雷扎·萨尔方提斯的真正目的,"萨梅雷扎·萨尔方提斯作为珊娜萨公会的管理者，血拳的主人，其真实目的和与无形之主的关系尚不明确。他涉及的非法或擦边生意也需要调查。",待办事项-萨梅雷扎·萨尔方提斯：珊娜萨公会管理者, 萨梅雷扎·萨尔方提斯, 珊娜萨公会, 无形之主, 真实目的, 非法生意
+XN018,贾拉索和达耶特佣兵团的意图,"贾拉索·班瑞和达耶特佣兵团想要什么？水下潜水艇里到底发生了什么？他们与莱拉·银手合作的真正目的是什么？",待办事项-贾拉索和达耶特佣兵团想要什么？, 贾拉索·班瑞, 达耶特佣兵团, 意图不明, 水下潜水艇, 莱拉·银手, 合作目的
+XN019,雷纳吊坠的秘密,"雷纳·无烬的吊坠（上面写着布兰达）的秘密，以及其与十二星组织的关系需要进一步探究。",待办事项-t-雷纳吊坠的事，顺便问问十二星组织, 雷纳·无烬, 吊坠, 布兰达, 十二星组织, 秘密, 关联
+XN020,背叛者安巴罗萨,"背叛者安巴罗萨的身份和背叛行为的真相尚不清楚。",待办事项-t-背叛者：安巴罗萨, 安巴罗萨, 背叛者, 身份不明, 背叛真相
+XN021,丽芙父母的下落,"丽芙父母西尔维娅·罗达和达伦·罗达在骷髅港失踪，需要找到他们的下落和真相。",待办事项-a-寻找丽芙的父母, 丽芙的父母, 西尔维娅·罗达, 达伦·罗达, 骷髅港, 下落不明, 真相
+XN022,法术瘟疫或地脉迷城病症,"黑杖塔图书馆可能藏有关于法术瘟疫或地脉迷城病症的信息，需要前往查询。",待办事项-a-去找黑杖问法术瘟疫或者地脉迷城病症的事, 法术瘟疫, 地脉迷城病症, 黑杖塔图书馆, 信息查询, 治疗方法？, 病症根源？
+XN023,莫特先生的竖琴手委托,"莫特先生（辛特莱格剧院）的竖琴手委托的具体内容尚不明确，可能与竖琴手联盟的任务有关。",待办事项-f-莫特先生找自己有竖琴手的事, 莫特先生, 竖琴手联盟, 委托内容, 任务细节
+XN024,雷纳的竖琴手身份,"雷纳·无烬也是竖琴手联盟的成员，这与寻找弗利西亚有什么关联？",待办事项-f-雷纳也有竖琴手的事寻找弗利西亚, 雷纳·无烬, 竖琴手联盟, 关联, 弗利西亚, 目的
+XN025,黑蝰蛇和罗兹纳庄园,"黑蝰蛇艾斯薇乐·罗兹纳和罗兹纳庄园的秘密，以及他们与阿斯蒙蒂斯教团的关系仍需深挖。",待办事项-黑蝰蛇和罗兹纳庄园, 黑蝰蛇, 艾斯薇乐·罗兹纳, 罗兹纳庄园, 阿斯蒙蒂斯教团, 家族秘密, 隐藏势力
+XN026,雷纳和十二星组织,"雷纳·无烬和十二星组织到底是什么关系？十二星组织又是什么样的组织？",待办事项-雷纳，十二星组织到底是什么？, 雷纳·无烬, 十二星组织, 关系, 组织性质, 历史背景
+XN027,莎奎姆和赫拉文的身份,"莎奎姆和赫拉文的真实身份和目的尚不清楚。他们与夺心魔和无形之主有什么关联？",待办事项-s-莎奎姆、赫拉文是怎么回事, 莎奎姆, 赫拉文, 身份不明, 目的不明, 夺心魔, 无形之主, 关联
+XN028,曼松一派？,"曼松一派的具体势力范围、成员构成、以及与珊娜萨公会的关系需要进一步调查。",待办事项-曼松一派？, 曼松, 曼松一派, 势力范围, 成员构成, 珊娜萨公会, 关系
+XN029,死者之城调查,"去死者之城寻找安布罗斯·永晓爵士，并调查夺心魔事件。在下水道中救出福卢恩时见到的夺心魔，与珊娜萨公会的徽记有何关联？",待办事项-s-去死者之城找安布罗斯·永晓爵士, 死者之城, 安布罗斯·永晓, 夺心魔, 珊娜萨公会, 关联, 调查方向
+XN030,寻找斯诺彼得的鼠人儿子,"斯诺彼得的鼠人儿子达舍尔·斯诺彼得的下落，以及他与珊娜萨公会的关系需要查明。",待办事项-寻找斯诺彼得的鼠人儿子, 斯诺彼得, 达舍尔·斯诺彼得, 鼠人, 珊娜萨公会, 下落不明, 关联
+XN031,“无形之主”的真相,"“无形之主”组织的最终目的是什么？他们与蓝焰危机的联系是什么？他们是否与法术瘟疫有关？",待办事项-“无形之主”, 无形之主, 最终目的, 蓝焰危机, 法术瘟疫, 关联, 真相
+XN032,格罗之石的真正力量,"格罗之石除了定位龙金外，是否还有其他隐藏的力量或秘密？其与达格特·无烬和珊娜萨公会的关系需要进一步挖掘。",待办事项-格罗之石的下落, 格罗之石, 隐藏力量, 秘密, 达格特·无烬, 珊娜萨公会, 真正用途
+""" # 悬念 CSV 数据 -  请替换成你提供的完整悬念 CSV 数据
+
+
+@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.5", author="AI & KirifujiNagisa") # 更新插件描述和版本号
+class DnDInfoPlugin(BasePlugin):
 
     def __init__(self, host: APIHost):
         self.characters = []
-        self.events = [] # 新增事件列表
+        self.events = []
+        self.suspenses = [] # 新增悬念列表
         # 初始化 logger
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.WARNING)
@@ -241,7 +280,7 @@ class DnDInfoPlugin(BasePlugin): # 更新插件类名
 
 
     async def initialize(self):
-        """插件初始化时加载角色和事件数据"""
+        """插件初始化时加载角色、事件和悬念数据"""
         try:
             self.characters = self._load_character_data(CSV_DATA)
             if not self.characters:
@@ -251,8 +290,8 @@ class DnDInfoPlugin(BasePlugin): # 更新插件类名
         except Exception as e:
             self.logger.exception(f"加载嵌入的角色 CSV 数据时发生错误: {e}")
 
-        try: # 加载事件数据
-            self.events = self._load_event_data(EVENT_CSV_DATA) # 加载事件数据
+        try:
+            self.events = self._load_event_data(EVENT_CSV_DATA)
             if not self.events:
                 self.logger.warning(f"嵌入的事件 CSV 数据为空或未找到事件数据。")
             else:
@@ -260,9 +299,18 @@ class DnDInfoPlugin(BasePlugin): # 更新插件类名
         except Exception as e:
             self.logger.exception(f"加载嵌入的事件 CSV 数据时发生错误: {e}")
 
+        try: # 加载悬念数据
+            self.suspenses = self._load_suspense_data(SUSPENSE_CSV_DATA) # 加载悬念数据
+            if not self.suspenses:
+                self.logger.warning(f"嵌入的悬念 CSV 数据为空或未找到悬念数据。")
+            else:
+                self.logger.info(f"成功加载 {len(self.suspenses)} 个悬念数据 from 嵌入的悬念 CSV 数据。")
+        except Exception as e:
+            self.logger.exception(f"加载嵌入的悬念 CSV 数据时发生错误: {e}")
+
 
     def _load_character_data(self, csv_string_data):
-        """从 CSV 字符串加载角色数据，返回一个角色字典列表 (保持不变)"""
+        """从 CSV 字符串加载角色数据，返回一个角色字典列表 (位置标识，请保持你的完整函数)"""
         characters = []
         try:
             csv_file = io.StringIO(csv_string_data)
@@ -273,8 +321,8 @@ class DnDInfoPlugin(BasePlugin): # 更新插件类名
             raise Exception(f"读取角色 CSV 字符串数据失败: {e}")
         return characters
 
-    def _load_event_data(self, csv_string_data): # 新增加载事件数据函数
-        """从 CSV 字符串加载事件数据，返回一个事件字典列表"""
+    def _load_event_data(self, csv_string_data):
+        """从 CSV 字符串加载事件数据，返回一个事件字典列表 (位置标识，请保持你的完整函数)"""
         events = []
         try:
             csv_file = io.StringIO(csv_string_data)
@@ -285,53 +333,85 @@ class DnDInfoPlugin(BasePlugin): # 更新插件类名
             raise Exception(f"读取事件 CSV 字符串数据失败: {e}")
         return events
 
+    def _load_suspense_data(self, csv_string_data): # 新增加载悬念数据函数
+        """从 CSV 字符串加载悬念数据，返回一个悬念字典列表"""
+        suspenses = []
+        try:
+            csv_file = io.StringIO(csv_string_data)
+            reader = csv.DictReader(csv_file)
+            for row in reader:
+                suspenses.append(row)
+        except Exception as e:
+            raise Exception(f"读取悬念 CSV 字符串数据失败: {e}")
+        return suspenses
+
     def _find_character_by_name(self, character_name):
-        """根据角色名称查找角色信息 (保持不变)"""
+        """根据角色名称查找角色信息 (位置标识，请保持你的完整函数)"""
         for char_data in self.characters:
             if char_data.get('角色名称', '').strip() == character_name.strip():
                 return char_data
         return None
 
     def _get_random_character(self):
-        """随机返回一个角色信息字典 (保持不变)"""
+        """随机返回一个角色信息字典 (位置标识，请保持你的完整函数)"""
         if not self.characters:
             return None
         return random.choice(self.characters)
 
-    def _get_random_event(self): # 新增随机事件函数
-        """随机返回一个事件信息字典"""
+    def _get_random_event(self):
+        """随机返回一个事件信息字典 (位置标识，请保持你的完整函数)"""
         if not self.events:
             return None
         return random.choice(self.events)
 
+    def _get_random_suspense(self): # 新增随机悬念函数
+        """随机返回一个悬念信息字典"""
+        if not self.suspenses:
+            return None
+        return random.choice(self.suspenses)
+
     def _format_character_info(self, char_info):
-        """格式化角色信息为易于阅读的字符串 (保持不变)"""
+        """格式化角色信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
         if not char_info:
             return "未找到该角色信息。"
         info_lines = [f"**{key}:** {value}" for key, value in char_info.items()]
         return "\n".join(info_lines)
 
-    def _format_event_info(self, event_info): # 新增格式化事件信息函数
-        """格式化事件信息为易于阅读的字符串"""
+    def _format_event_info(self, event_info):
+        """格式化事件信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
         if not event_info:
             return "未找到该事件信息。"
-
         info_lines = [f"**{key}:** {value}" for key, value in event_info.items()]
         return "\n".join(info_lines)
 
+    def _format_suspense_info(self, suspense_info): # 新增格式化悬念信息函数
+        """格式化悬念信息为易于阅读的字符串"""
+        if not suspense_info:
+            return "未找到该悬念信息。"
+
+        info_lines = [f"**{key}:** {value}" for key, value in suspense_info.items()]
+        return "\n".join(info_lines)
+
     def _format_character_list(self):
-        """格式化角色列表为易于阅读的字符串 (保持不变)"""
+        """格式化角色列表为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
         if not self.characters:
             return "角色列表为空。"
         character_names = [char['角色名称'] for char in self.characters]
         return "\n- " + "\n- ".join(character_names)
 
-    def _format_event_list(self): # 新增格式化事件列表函数 (可选，如果你需要列出所有事件)
-        """格式化事件列表为易于阅读的字符串 (可选)"""
+    def _format_event_list(self):
+        """格式化事件列表为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
         if not self.events:
             return "事件列表为空。"
         event_names = [event['事件名称'] for event in self.events]
         return "\n- " + "\n- ".join(event_names)
+
+    def _format_suspense_list(self): # 新增格式化悬念列表函数 (可选，如果你需要列出所有悬念)
+        """格式化悬念列表为易于阅读的字符串 (可选)"""
+        if not self.suspenses:
+            return "悬念列表为空。"
+        suspense_names = [suspense['悬念名称'] for suspense in self.suspenses]
+        return "\n- " + "\n- ".join(suspense_names)
 
 
     @handler(PersonNormalMessageReceived)
@@ -370,12 +450,21 @@ class DnDInfoPlugin(BasePlugin): # 更新插件类名
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
-        elif msg == ".随机事件": # 新增 .随机事件 命令处理
-            random_event_info = self._get_random_event() # 获取随机事件信息
+        elif msg == ".随机事件":
+            random_event_info = self._get_random_event()
             if random_event_info:
-                reply = "为你推荐一个随机事件:\n" + self._format_event_info(random_event_info) # 格式化事件信息
+                reply = "为你推荐一个随机事件:\n" + self._format_event_info(random_event_info)
             else:
-                reply = "事件数据为空，无法随机选择事件。" # 理论上不会出现，作为保险
+                reply = "事件数据为空，无法随机选择事件。"
+            ctx.add_return("reply", [reply])
+            ctx.prevent_default()
+
+        elif msg == ".随机悬念": # 新增 .随机悬念 命令处理
+            random_suspense_info = self._get_random_suspense() # 获取随机悬念信息
+            if random_suspense_info:
+                reply = "为你推荐一个随机悬念:\n" + self._format_suspense_info(random_suspense_info) # 格式化悬念信息
+            else:
+                reply = "悬念数据为空，无法随机选择悬念。" # 理论上不会出现，作为保险
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
@@ -390,6 +479,19 @@ class DnDInfoPlugin(BasePlugin): # 更新插件类名
             ctx.prevent_default()
         elif msg == ".列出事件名单": # 可选：添加 .列出事件名单 命令 (如果需要列出所有事件)
             reply = self._format_event_list() # 调用 _format_event_list 函数格式化事件列表
+            ctx.add_return("reply", [reply])
+            ctx.prevent_default()
+        elif msg == ".列出悬念名单": # 可选：添加 .列出悬念名单 命令 (如果需要列出所有悬念)
+            reply = self._format_suspense_list() # 调用 _format_suspense_list 函数格式化悬念列表
+            ctx.add_return("reply", [reply])
+            ctx.prevent_default()
+        elif msg.startswith(".查询悬念"): # 可选：添加 .查询悬念 命令 (如果需要按名称查询悬念)
+            suspense_name = msg[len(".查询悬念"):].strip()
+            if not suspense_name:
+                reply = "请在 `.查询悬念` 命令后输入要查询的悬念名称，例如：`.查询悬念 颅骨岛的珊娜萨余党`"
+            else:
+                # (这里可以实现 _find_suspense_by_name 函数，如果需要按悬念名称查询)
+                reply = "`.查询悬念` 功能暂未实现，敬请期待！" # 或者你可以实现一个 _find_suspense_by_name 函数
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
