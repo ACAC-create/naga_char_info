@@ -221,7 +221,7 @@ LY025, 哈科·践誓,"加莱斯特委托塔莱伊抓捕通缉犯哈科·践誓�
 LY026, 黑蝰蛇的真实身份,"PC们得知黑蝰蛇的真实身份是艾斯薇乐·罗兹那，并了解了罗兹纳家族与阿斯蒙蒂斯的交易。", 黑蝰蛇, 艾斯薇乐·罗兹那, 罗兹纳家族, 阿斯蒙蒂斯
 LY027, 末日劫掠者,"塔什林·雅菲拉委托PC们找出末日劫掠者中的叛徒。", 末日劫掠者, 叛徒, 塔什林·雅菲拉
 LY028, 深水城的冬天,"深水城出现了异常的寒冷天气，可能与法术瘟疫或迈盖拉有关。", 深水城, 冬天, 法术瘟疫, 迈盖拉
-""" # 事件 CSV 数据，完整数据请替换成你提供的完整 CSV 数据
+""" # 事件 CSV 数据
 
 
 
@@ -259,10 +259,9 @@ XN029,死者之城调查,"去死者之城寻找安布罗斯·永晓爵士，并�
 XN030,寻找斯诺彼得的鼠人儿子,"斯诺彼得的鼠人儿子达舍尔·斯诺彼得的下落，以及他与珊娜萨公会的关系需要查明。",待办事项-寻找斯诺彼得的鼠人儿子, 斯诺彼得, 达舍尔·斯诺彼得, 鼠人, 珊娜萨公会, 下落不明, 关联
 XN031,“无形之主”的真相,"“无形之主”组织的最终目的是什么？他们与蓝焰危机的联系是什么？他们是否与法术瘟疫有关？",待办事项-“无形之主”, 无形之主, 最终目的, 蓝焰危机, 法术瘟疫, 关联, 真相
 XN032,格罗之石的真正力量,"格罗之石除了定位龙金外，是否还有其他隐藏的力量或秘密？其与达格特·无烬和珊娜萨公会的关系需要进一步挖掘。",待办事项-格罗之石的下落, 格罗之石, 隐藏力量, 秘密, 达格特·无烬, 珊娜萨公会, 真正用途
-""" # 悬念 CSV 数据 -  请替换成你提供的完整悬念 CSV 数据
+""" # 悬念 CSV 数据 
 
-
-@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.7", author="AI & KirifujiNagisa") # 更新版本号
+@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.8", author="AI & KirifujiNagisa") # 更新版本号
 class DnDInfoPlugin(BasePlugin):
 
     def __init__(self, host: APIHost):
@@ -377,8 +376,8 @@ class DnDInfoPlugin(BasePlugin):
                 return suspense_data
         return None
 
-    def _find_event_by_name(self, event_name): # 新增函数：根据事件名称查找事件信息
-        """根据事件名称查找事件信息，返回事件字典或 None"""
+    def _find_event_by_name(self, event_name):
+        """根据事件名称查找事件信息，返回事件字典或 None (位置标识，请保持你的完整函数)"""
         for event_data in self.events:
             if event_data.get('事件名称', '').strip() == event_name.strip():
                 return event_data
@@ -407,6 +406,29 @@ class DnDInfoPlugin(BasePlugin):
         info_lines = [f"**{key}:** {value}" for key, value in suspense_info.items()]
         return "\n".join(info_lines)
 
+    def _format_suspense_list(self, page_num=1, page_size=10): # 修改 _format_suspense_list 函数，添加分页参数
+        """格式化悬念列表为易于阅读的字符串，支持分页"""
+        if not self.suspenses:
+            return ["悬念列表为空。"] #  返回列表，即使是单页错误信息
+
+        start_index = (page_num - 1) * page_size # 计算起始索引
+        end_index = start_index + page_size # 计算结束索引
+        paged_suspenses = self.suspenses[start_index:end_index] #  获取当前页的悬念
+
+        if not paged_suspenses: #  如果当前页没有悬念，说明页码超出范围
+            return [f"页码超出范围，总页数 {self._get_suspense_total_pages(page_size)} 页。"]
+
+        suspense_names = [suspense['悬念名称'] for suspense in paged_suspenses]
+        page_content = "\n- " + "\n- ".join(suspense_names)
+        total_pages = self._get_suspense_total_pages(page_size) # 获取总页数
+        header = f"悬念列表 (第 {page_num}/{total_pages} 页):\n" # 添加页码信息
+        return [header + page_content] # 返回包含页头和页内容的列表，方便后续发送多页消息
+
+    def _get_suspense_total_pages(self, page_size=10): #  新增函数：计算悬念总页数
+        """计算悬念列表的总页数"""
+        return (len(self.suspenses) + page_size - 1) // page_size #  向上取整计算总页数
+
+
     def _format_character_list(self):
         """格式化角色列表为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
         if not self.characters:
@@ -420,13 +442,6 @@ class DnDInfoPlugin(BasePlugin):
             return "事件列表为空。"
         event_names = [event['事件名称'] for event in self.events]
         return "\n- " + "\n- ".join(event_names)
-
-    def _format_suspense_list(self):
-        """格式化悬念列表为易于阅读的字符串 (可选) (位置标识，请保持你的完整函数)"""
-        if not self.suspenses:
-            return "悬念列表为空。"
-        suspense_names = [suspense['悬念名称'] for suspense in self.suspenses]
-        return "\n- " + "\n- ".join(suspense_names)
 
 
     @handler(PersonNormalMessageReceived)
@@ -483,26 +498,35 @@ class DnDInfoPlugin(BasePlugin):
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
-        elif msg.startswith(".查询事件"): #  实现 .查询事件 命令 (这次是真的！)
+        elif msg.startswith(".查询事件"):
             event_name = msg[len(".查询事件"):].strip()
             if not event_name:
                 reply = "请在 `.查询事件` 命令后输入要查询的事件名称，例如：`.查询事件 降龙节遇袭`"
             else:
-                event_info = self._find_event_by_name(event_name) # 调用 _find_event_by_name 函数
+                event_info = self._find_event_by_name(event_name)
                 if event_info:
-                    reply = self._format_event_info(event_info) # 格式化事件信息
+                    reply = self._format_event_info(event_info)
                 else:
-                    reply = f"未找到名为 \"{event_name}\" 的事件。" # 事件未找到的提示
+                    reply = f"未找到名为 \"{event_name}\" 的事件。"
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
         elif msg == ".列出事件名单": # 可选：添加 .列出事件名单 命令 (如果需要列出所有事件)
             reply = self._format_event_list()
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
-        elif msg == ".列出悬念名单":
-            reply = self._format_suspense_list()
-            ctx.add_return("reply", [reply])
+        elif msg.startswith(".列出悬念名单"): # 修改 .列出悬念名单 命令，实现分页
+            parts = msg.split() #  分割命令，例如 ".列出悬念名单 2"
+            page_num = 1 # 默认页码为 1
+            if len(parts) > 1 and parts[1].isdigit(): #  如果命令后面有数字，尝试解析页码
+                page_num = int(parts[1])
+                if page_num <= 0:
+                    page_num = 1 # 页码不能小于 1
+
+            page_replies = self._format_suspense_list(page_num) # 调用 _format_suspense_list 获取当前页内容 (返回的是列表)
+            ctx.add_return("reply", page_replies) #  直接返回列表，插件平台会自动发送多条消息
             ctx.prevent_default()
+
+
         elif msg.startswith(".查询悬念"):
             suspense_name = msg[len(".查询悬念"):].strip()
             if not suspense_name:
