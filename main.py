@@ -261,7 +261,7 @@ XN031,“无形之主”的真相,"“无形之主”组织的最终目的是什
 XN032,格罗之石的真正力量,"格罗之石除了定位龙金外，是否还有其他隐藏的力量或秘密？其与达格特·无烬和珊娜萨公会的关系需要进一步挖掘。",待办事项-格罗之石的下落, 格罗之石, 隐藏力量, 秘密, 达格特·无烬, 珊娜萨公会, 真正用途
 """ # 悬念 CSV 数据 
 
-@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.8", author="AI & KirifujiNagisa") # 更新版本号
+@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="2.0", author="AI & KirifujiNagisa") # 版本号 2.0，包含统一搜索
 class DnDInfoPlugin(BasePlugin):
 
     def __init__(self, host: APIHost):
@@ -309,7 +309,7 @@ class DnDInfoPlugin(BasePlugin):
 
 
     def _load_character_data(self, csv_string_data):
-        """从 CSV 字符串加载角色数据，返回一个角色字典列表 (位置标识，请保持你的完整函数)"""
+        """从 CSV 字符串加载角色数据，返回一个角色字典列表"""
         characters = []
         try:
             csv_file = io.StringIO(csv_string_data)
@@ -321,7 +321,7 @@ class DnDInfoPlugin(BasePlugin):
         return characters
 
     def _load_event_data(self, csv_string_data):
-        """从 CSV 字符串加载事件数据，返回一个事件字典列表 (位置标识，请保持你的完整函数)"""
+        """从 CSV 字符串加载事件数据，返回一个事件字典列表"""
         events = []
         try:
             csv_file = io.StringIO(csv_string_data)
@@ -345,20 +345,20 @@ class DnDInfoPlugin(BasePlugin):
         return suspenses
 
     def _find_character_by_name(self, character_name):
-        """根据角色名称查找角色信息 (位置标识，请保持你的完整函数)"""
+        """根据角色名称查找角色信息，返回角色字典或 None"""
         for char_data in self.characters:
             if char_data.get('角色名称', '').strip() == character_name.strip():
                 return char_data
         return None
 
     def _get_random_character(self):
-        """随机返回一个角色信息字典 (位置标识，请保持你的完整函数)"""
+        """随机返回一个角色信息字典"""
         if not self.characters:
             return None
         return random.choice(self.characters)
 
     def _get_random_event(self):
-        """随机返回一个事件信息字典 (位置标识，请保持你的完整函数)"""
+        """随机返回一个事件信息字典"""
         if not self.events:
             return None
         return random.choice(self.events)
@@ -370,43 +370,160 @@ class DnDInfoPlugin(BasePlugin):
         return random.choice(self.suspenses)
 
     def _find_suspense_by_name(self, suspense_name):
-        """根据悬念名称查找悬念信息，返回悬念字典或 None (位置标识，请保持你的完整函数)"""
+        """根据悬念名称查找悬念信息，返回悬念字典或 None"""
         for suspense_data in self.suspenses:
             if suspense_data.get('悬念名称', '').strip() == suspense_name.strip():
                 return suspense_data
         return None
 
     def _find_event_by_name(self, event_name):
-        """根据事件名称查找事件信息，返回事件字典或 None (位置标识，请保持你的完整函数)"""
+        """根据事件名称查找事件信息，返回事件字典或 None"""
         for event_data in self.events:
             if event_data.get('事件名称', '').strip() == event_name.strip():
                 return event_data
         return None
 
+    def _search_characters(self, keyword):
+        """根据关键词搜索角色信息，返回匹配的角色字典列表"""
+        results = []
+        keyword = keyword.lower() # 将关键词转换为小写，忽略大小写
+        searchable_fields = ["角色名称", "种族", "职业", "所属组织/势力", "性格特征", "目标/动机", "备注"] #  定义角色可搜索的字段
+        for char_data in self.characters:
+            for field in searchable_fields:
+                if field in char_data and keyword in str(char_data[field]).lower(): # 检查字段是否存在，并将字段值转换为字符串并转换为小写进行比较
+                    results.append(char_data)
+                    break #  如果在一个字段中找到匹配，就添加到结果列表并跳出当前角色的字段搜索，避免重复添加
+        return results
+
+    def _search_events(self, keyword):
+        """根据关键词搜索事件信息，返回匹配的事件字典列表"""
+        results = []
+        keyword = keyword.lower()
+        searchable_fields = ["事件名称", "详细描述", "备注/线索"] # 定义事件可搜索的字段
+        for event_data in self.events:
+            for field in searchable_fields:
+                if field in event_data and keyword in str(event_data[field]).lower():
+                    results.append(event_data)
+                    break
+        return results
+
+    def _search_suspenses(self, keyword):
+        """根据关键词搜索悬念信息，返回匹配的悬念字典列表"""
+        results = []
+        keyword = keyword.lower()
+        searchable_fields = ["悬念名称", "悬念描述", "相关线索", "可能答案/方向"] # 定义悬念可搜索的字段
+        for suspense_data in self.suspenses:
+            for field in searchable_fields:
+                if field in suspense_data and keyword in str(suspense_data[field]).lower():
+                    results.append(suspense_data)
+                    break
+        return results
+
+    def _format_unified_search_results(self, unified_results):
+        """格式化统一搜索结果为易于阅读的字符串"""
+        output_lines = []
+
+        if unified_results["characters"]:
+            character_names = [char['角色名称'] for char in unified_results["characters"]]
+            output_lines.append("**搜索到以下角色:**")
+            output_lines.extend(["- " + name for name in character_names])
+
+        if unified_results["events"]:
+            event_names = [event['事件名称'] for event in unified_results["events"]]
+            output_lines.append("\n**搜索到以下事件:**")
+            output_lines.extend(["- " + name for name in event_names])
+
+        if unified_results["suspenses"]:
+            suspense_names = [suspense['悬念名称'] for suspense in unified_results["suspenses"]]
+            output_lines.append("\n**搜索到以下悬念:**")
+            output_lines.extend(["- " + name for name in suspense_names])
+
+        if not output_lines:
+            return "未找到任何匹配内容。"
+        else:
+            return "\n".join(output_lines)
+
+    def _unified_search(self, keyword):
+        """统一搜索角色、事件和悬念，返回所有类型的结果"""
+        character_results = self._search_characters(keyword)
+        event_results = self._search_events(keyword)
+        suspense_results = self._search_suspenses(keyword)
+
+        unified_results = {
+            "characters": character_results,
+            "events": event_results,
+            "suspenses": suspense_results,
+        }
+        return unified_results
+
+    def _format_data_list_page(self, data_list, data_type_name, page_num=1, page_size=10):
+        """格式化数据列表为易于阅读的字符串，支持分页，适用于角色、事件、悬念列表"""
+        if not data_list:
+            return [f"{data_type_name}列表为空。"]
+
+        start_index = (page_num - 1) * page_size
+        end_index = start_index + page_size
+        paged_data = data_list[start_index:end_index]
+
+        if not paged_data:
+            total_pages = self._get_total_pages(len(data_list), page_size)
+            return [f"页码超出范围，总页数 {total_pages} 页。"]
+
+        data_names = [item[f'{data_type_name[:-2]}名称'] for item in paged_data if f'{data_type_name[:-2]}名称' in item] #  动态获取名称字段，例如 "悬念名称", "角色名称"
+        if not data_names: #  处理名称字段不存在的情况，例如事件列表可能没有 "事件名称" 字段，而是 "事件名称"
+            data_names = [item[f'{data_type_name[:-2]}名称'] for item in paged_data] # 尝试使用 "事件名称" (不确定哪个字段是名称，根据你的 CSV 文件调整)
+
+
+        page_content = "\n- " + "\n- ".join(data_names)
+        total_pages = self._get_total_pages(len(data_list), page_size)
+        header = f"{data_type_name}列表 (第 {page_num}/{total_pages} 页):\n"
+        return [header + page_content]
+
+    def _get_total_pages(self, total_items_count, page_size=10):
+        """计算总页数，通用函数，适用于任何数据列表"""
+        return (total_items_count + page_size - 1) // page_size
+
+    def _get_suspense_total_pages(self, page_size=10): #  保留旧的 _get_suspense_total_pages 函数，但不再使用
+        """计算悬念列表的总页数 (旧函数，已弃用，请使用 _get_total_pages)"""
+        return self._get_total_pages(len(self.suspenses), page_size)
 
     def _format_character_info(self, char_info):
-        """格式化角色信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
+        """格式化角色信息为易于阅读的字符串"""
         if not char_info:
             return "未找到该角色信息。"
         info_lines = [f"**{key}:** {value}" for key, value in char_info.items()]
         return "\n".join(info_lines)
 
     def _format_event_info(self, event_info):
-        """格式化事件信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
+        """格式化事件信息为易于阅读的字符串"""
         if not event_info:
             return "未找到该事件信息。"
         info_lines = [f"**{key}:** {value}" for key, value in event_info.items()]
         return "\n".join(info_lines)
 
     def _format_suspense_info(self, suspense_info):
-        """格式化悬念信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
+        """格式化悬念信息为易于阅读的字符串"""
         if not suspense_info:
             return "未找到该悬念信息。"
 
         info_lines = [f"**{key}:** {value}" for key, value in suspense_info.items()]
         return "\n".join(info_lines)
 
-    def _format_suspense_list(self, page_num=1, page_size=10): # 修改 _format_suspense_list 函数，添加分页参数
+    def _format_character_list(self):
+        """格式化角色列表为易于阅读的字符串"""
+        if not self.characters:
+            return "角色列表为空。"
+        character_names = [char['角色名称'] for char in self.characters]
+        return "\n- " + "\n- ".join(character_names)
+
+    def _format_event_list(self):
+        """格式化事件列表为易于阅读的字符串"""
+        if not self.events:
+            return "事件列表为空。"
+        event_names = [event['事件名称'] for event in self.events]
+        return "\n- " + "\n- ".join(event_names)
+
+    def _format_suspense_list(self, page_num=1, page_size=10):
         """格式化悬念列表为易于阅读的字符串，支持分页"""
         if not self.suspenses:
             return ["悬念列表为空。"] #  返回列表，即使是单页错误信息
@@ -423,25 +540,6 @@ class DnDInfoPlugin(BasePlugin):
         total_pages = self._get_suspense_total_pages(page_size) # 获取总页数
         header = f"悬念列表 (第 {page_num}/{total_pages} 页):\n" # 添加页码信息
         return [header + page_content] # 返回包含页头和页内容的列表，方便后续发送多页消息
-
-    def _get_suspense_total_pages(self, page_size=10): #  新增函数：计算悬念总页数
-        """计算悬念列表的总页数"""
-        return (len(self.suspenses) + page_size - 1) // page_size #  向上取整计算总页数
-
-
-    def _format_character_list(self):
-        """格式化角色列表为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
-        if not self.characters:
-            return "角色列表为空。"
-        character_names = [char['角色名称'] for char in self.characters]
-        return "\n- " + "\n- ".join(character_names)
-
-    def _format_event_list(self):
-        """格式化事件列表为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
-        if not self.events:
-            return "事件列表为空。"
-        event_names = [event['事件名称'] for event in self.events]
-        return "\n- " + "\n- ".join(event_names)
 
 
     @handler(PersonNormalMessageReceived)
@@ -504,28 +602,19 @@ class DnDInfoPlugin(BasePlugin):
                 reply = "请在 `.查询事件` 命令后输入要查询的事件名称，例如：`.查询事件 降龙节遇袭`"
             else:
                 event_info = self._find_event_by_name(event_name)
-                if event_info:
-                    reply = self._format_event_info(event_info)
-                else:
-                    reply = f"未找到名为 \"{event_name}\" 的事件。"
+                reply = self._format_event_info(event_info)
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
-        elif msg == ".列出事件名单": # 可选：添加 .列出事件名单 命令 (如果需要列出所有事件)
+
+        elif msg == ".列出事件名单":
             reply = self._format_event_list()
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
-        elif msg.startswith(".列出悬念名单"): # 修改 .列出悬念名单 命令，实现分页
-            parts = msg.split() #  分割命令，例如 ".列出悬念名单 2"
-            page_num = 1 # 默认页码为 1
-            if len(parts) > 1 and parts[1].isdigit(): #  如果命令后面有数字，尝试解析页码
-                page_num = int(parts[1])
-                if page_num <= 0:
-                    page_num = 1 # 页码不能小于 1
 
-            page_replies = self._format_suspense_list(page_num) # 调用 _format_suspense_list 获取当前页内容 (返回的是列表)
-            ctx.add_return("reply", page_replies) #  直接返回列表，插件平台会自动发送多条消息
+        elif msg == ".列出悬念名单":
+            page_replies = self._format_suspense_list(page_num=1) # 默认显示第一页
+            ctx.add_return("reply", page_replies)
             ctx.prevent_default()
-
 
         elif msg.startswith(".查询悬念"):
             suspense_name = msg[len(".查询悬念"):].strip()
@@ -533,10 +622,22 @@ class DnDInfoPlugin(BasePlugin):
                 reply = "请在 `.查询悬念` 命令后输入要查询的悬念名称，例如：`.查询悬念 颅骨岛的珊娜萨余党`"
             else:
                 suspense_info = self._find_suspense_by_name(suspense_name)
-                if suspense_info:
-                    reply = self._format_suspense_info(suspense_info)
-                else:
-                    reply = f"未找到名为 \"{suspense_name}\" 的悬念。"
+                reply = self._format_suspense_info(suspense_info)
+            ctx.add_return("reply", [reply])
+            ctx.prevent_default()
+
+        elif msg.startswith(".搜索 "): # 统一搜索命令
+            search_keyword = msg[len(".搜索 "):].strip()
+            if not search_keyword:
+                reply = "请在 `.搜索` 命令后输入要搜索的关键词，例如：`.搜索 龙金`"
+            else:
+                unified_results = self._unified_search(search_keyword)
+                reply = self._format_unified_search_results(unified_results)
+
+            ctx.add_return("reply", [reply])
+            ctx.prevent_default()
+        elif msg.startswith(".搜索角色") or msg.startswith(".搜索事件") or msg.startswith(".搜索悬念"): #  提示信息，引导用户使用 .搜索 命令
+            reply = "搜索命令已更新为统一命令 `.搜索 <关键词>`，例如：`.搜索 龙金`。  `.搜索角色`, `.搜索事件`, `.搜索悬念` 命令已停用，请使用新的 `.搜索` 命令。"
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
