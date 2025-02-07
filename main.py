@@ -1,15 +1,16 @@
 import logging
 import csv
-import io # 导入 io 模块
+import io  # 导入 io 模块
+import random # 导入 random 模块
 from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventContext
 from pkg.plugin.events import PersonNormalMessageReceived, GroupNormalMessageReceived
 
 CSV_DATA = """角色ID,角色名称,种族,职业,所属组织/势力,性格特征,目标/动机,当前状态,备注
-char_001,艾尔维,精灵,术士,灰色小队,未知,寻找知识、保护朋友、解决法术瘟疫,活跃,法师之子,有龙族血统，与加莱斯特订婚。在深水城进行冒险和学习，被卷入法术瘟疫、夺心魔、无形之主等事件。
-char_002,弗利西亚,半精灵,黎儿拉牧师/诗人,竖琴手同盟,善良、纯真、有艺术天赋,寻找母亲、传播欢乐、学习,活跃,杰西纳之女，在深水城进行冒险和表演，被卷入各种事件。
-char_003,瑟曼莎,梭罗鱼人,游侠/德鲁伊,翠绿闲庭/深洋隐修会,善良、好奇、有正义感,寻找身世、保护海洋、对抗夺心魔,活跃,塔萨神选试炼中，来自佩萨纳，被植入夺心魔蝌蚪，在深水城进行冒险和调查。
-char_004,斯坦纳,矮人,奇械师,灰手小队,未知,寻找妻子、服务深水城,活跃,被妻子赶出家门，加入灰手小队，参与深水城冒险。
-char_005,塔莱伊,歌利亚人,战士,城主联盟,勇敢、无畏、重视家庭,保护深水城、寻找安南背叛者、照顾孩子,活跃,歌利亚部落前酋长，与雷纳结婚，在深水城进行冒险和调查。
+char_001,艾尔维·曼维尔,精灵,术士,灰色小队,未知,寻找知识、保护朋友、解决法术瘟疫,活跃,法师之子,有龙族血统，与加莱斯特订婚。在深水城进行冒险和学习，被卷入法术瘟疫、夺心魔、无形之主等事件。
+char_002,弗利西亚·吴钩,半精灵,黎儿拉牧师/诗人,竖琴手同盟,善良、纯真、有艺术天赋,寻找母亲、传播欢乐、学习,活跃,杰西纳之女，在深水城进行冒险和表演，被卷入各种事件。
+char_003,瑟曼莎·里里,梭罗鱼人,游侠/德鲁伊,翠绿闲庭/深洋隐修会,善良、好奇、有正义感,寻找身世、保护海洋、对抗夺心魔,活跃,塔萨神选试炼中，来自佩萨纳，被植入夺心魔蝌蚪，在深水城进行冒险和调查。
+char_004,斯坦纳·火须,矮人,奇械师,灰手小队,未知,寻找妻子、服务深水城,活跃,被妻子赶出家门，加入灰手小队，参与深水城冒险。
+char_005,塔莱伊·杀熊者,歌利亚人,战士,城主联盟,勇敢、无畏、重视家庭,保护深水城、寻找安南背叛者、照顾孩子,活跃,歌利亚部落前酋长，与雷纳结婚，在深水城进行冒险和调查。
 char_006,加莱斯特·银鬃,人类,未知,领主联盟/前紫龙骑士,正直、善良、有责任感，自卑,保护深水城、与艾尔维相爱,活跃,曾是圣武士，与艾尔维订婚。科米尔贵族，逃离婚约，父亲去世，曾为洛山达圣武士，后失去信仰。
 char_007,雷纳·无烬,人类,未知,竖琴手同盟/十二星,善良、温柔、包容,保护深水城、帮助朋友,活跃,前公开领主之子，与塔莱伊结婚。被误认、绑架，后被小队解救。曾被夺心魔蝌蚪寄生。
 char_008,福卢恩·布拉格玛,人类,园丁/狼人,无,善良、单纯、忠诚,陪伴朋友,活跃,雷纳的伴童和挚友,被妮奥月星转变为狼人。智力受损，喜欢园艺。
@@ -88,7 +89,7 @@ char_080,瑞斯，人类,未知,高岗格吕姆,未知,未知,未知,
 char_081,伊芙丽·酒锤,矮人,未知,高岗格吕姆,未知,未知,活跃,马博的女儿，高岗格吕姆领导者。
 char_082,斯特森·战锤,矮人,未知,高岗格吕姆,未知,未知,活跃,帮助重建高岗格吕姆。
 char_083,先知阿兰多,人类,未知,未知,未知,做出预言,未知,圣人，做出关于托瑞尔陨灭的预言。
-char_084,阿巴达·牧月者/桃雀,人类,法师,未知/十二星,未知,寻找乐谱,活跃,在遗迹中寻找乐谱。
+char_084,阿巴达·牧月者/桃雀,人类,法师,未知/十二星,未知/十二星,未知,寻找乐谱,活跃,在遗迹中寻找乐谱。
 char_085,卡琳娜姨姨,人类,未知,未知,未知,塞尔人，做药水生意,未知,
 char_086,格威兹·圣·劳普桑,人类,未知,圣劳普森孤儿院,未知,院长,活跃,
 char_087,艾泽瑞娜·卡萨兰特,人类,未知,卡萨兰特家族,未知,未知,被f2ns领养,卡萨兰特家族双胞胎。
@@ -139,7 +140,7 @@ char_134,薇薇特·黑水,人类,未知,曼松一派,未知,未知,未知,
 char_135,胡拉姆,人类,武僧,未知,未知,未知,住在深水山上, 活跃"""
 
 
-@register(name="CharacterInfoPlugin", description="角色信息查询插件，从嵌入的 CSV 数据读取角色数据", version="1.2", author="AI & KirifujiNagisa") # 更新版本号
+@register(name="CharacterInfoPlugin", description="角色信息查询插件，从嵌入的 CSV 数据读取角色数据", version="1.3", author="AI & KirifujiNagisa") # 更新版本号
 class CharacterInfoPlugin(BasePlugin):
 
     def __init__(self, host: APIHost):
@@ -185,6 +186,13 @@ class CharacterInfoPlugin(BasePlugin):
                 return char_data
             return None
 
+    def _get_random_character(self):
+        """随机返回一个角色信息字典"""
+        if not self.characters:
+            return None
+        return random.choice(self.characters) # 使用 random.choice 从列表中随机选择一个元素
+
+
     def _format_character_info(self, char_info):
         """格式化角色信息为易于阅读的字符串"""
         if not char_info:
@@ -226,6 +234,16 @@ class CharacterInfoPlugin(BasePlugin):
             reply = self._format_character_list()
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
+
+        elif msg == ".随机角色": # 新增 .随机角色 命令处理
+            random_char_info = self._get_random_character() # 获取随机角色信息
+            if random_char_info:
+                reply = "为你推荐一个随机角色:\n" + self._format_character_info(random_char_info) # 格式化角色信息
+            else:
+                reply = "角色数据为空，无法随机选择角色。" # 理论上不会出现，作为保险
+            ctx.add_return("reply", [reply])
+            ctx.prevent_default()
+
 
     def __del__(self):
         pass
