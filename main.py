@@ -262,13 +262,13 @@ XN032,格罗之石的真正力量,"格罗之石除了定位龙金外，是否还
 """ # 悬念 CSV 数据 -  请替换成你提供的完整悬念 CSV 数据
 
 
-@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.5", author="AI & KirifujiNagisa") # 更新插件描述和版本号
+@register(name="DnDInfoPlugin", description="DnD 角色、事件和悬念信息查询插件", version="1.6", author="AI & KirifujiNagisa") # 更新版本号
 class DnDInfoPlugin(BasePlugin):
 
     def __init__(self, host: APIHost):
         self.characters = []
         self.events = []
-        self.suspenses = [] # 新增悬念列表
+        self.suspenses = []
         # 初始化 logger
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.WARNING)
@@ -300,7 +300,7 @@ class DnDInfoPlugin(BasePlugin):
             self.logger.exception(f"加载嵌入的事件 CSV 数据时发生错误: {e}")
 
         try: # 加载悬念数据
-            self.suspenses = self._load_suspense_data(SUSPENSE_CSV_DATA) # 加载悬念数据
+            self.suspenses = self._load_suspense_data(SUSPENSE_CSV_DATA)
             if not self.suspenses:
                 self.logger.warning(f"嵌入的悬念 CSV 数据为空或未找到悬念数据。")
             else:
@@ -333,7 +333,7 @@ class DnDInfoPlugin(BasePlugin):
             raise Exception(f"读取事件 CSV 字符串数据失败: {e}")
         return events
 
-    def _load_suspense_data(self, csv_string_data): # 新增加载悬念数据函数
+    def _load_suspense_data(self, csv_string_data):
         """从 CSV 字符串加载悬念数据，返回一个悬念字典列表"""
         suspenses = []
         try:
@@ -364,11 +364,18 @@ class DnDInfoPlugin(BasePlugin):
             return None
         return random.choice(self.events)
 
-    def _get_random_suspense(self): # 新增随机悬念函数
+    def _get_random_suspense(self):
         """随机返回一个悬念信息字典"""
         if not self.suspenses:
             return None
         return random.choice(self.suspenses)
+
+    def _find_suspense_by_name(self, suspense_name): # 新增函数：根据悬念名称查找悬念信息
+        """根据悬念名称查找悬念信息，返回悬念字典或 None"""
+        for suspense_data in self.suspenses:
+            if suspense_data.get('悬念名称', '').strip() == suspense_name.strip():
+                return suspense_data
+        return None
 
     def _format_character_info(self, char_info):
         """格式化角色信息为易于阅读的字符串 (位置标识，请保持你的完整函数)"""
@@ -384,7 +391,7 @@ class DnDInfoPlugin(BasePlugin):
         info_lines = [f"**{key}:** {value}" for key, value in event_info.items()]
         return "\n".join(info_lines)
 
-    def _format_suspense_info(self, suspense_info): # 新增格式化悬念信息函数
+    def _format_suspense_info(self, suspense_info):
         """格式化悬念信息为易于阅读的字符串"""
         if not suspense_info:
             return "未找到该悬念信息。"
@@ -406,7 +413,7 @@ class DnDInfoPlugin(BasePlugin):
         event_names = [event['事件名称'] for event in self.events]
         return "\n- " + "\n- ".join(event_names)
 
-    def _format_suspense_list(self): # 新增格式化悬念列表函数 (可选，如果你需要列出所有悬念)
+    def _format_suspense_list(self):
         """格式化悬念列表为易于阅读的字符串 (可选)"""
         if not self.suspenses:
             return "悬念列表为空。"
@@ -459,12 +466,12 @@ class DnDInfoPlugin(BasePlugin):
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
-        elif msg == ".随机悬念": # 新增 .随机悬念 命令处理
-            random_suspense_info = self._get_random_suspense() # 获取随机悬念信息
+        elif msg == ".随机悬念":
+            random_suspense_info = self._get_random_suspense()
             if random_suspense_info:
-                reply = "为你推荐一个随机悬念:\n" + self._format_suspense_info(random_suspense_info) # 格式化悬念信息
+                reply = "为你推荐一个随机悬念:\n" + self._format_suspense_info(random_suspense_info)
             else:
-                reply = "悬念数据为空，无法随机选择悬念。" # 理论上不会出现，作为保险
+                reply = "悬念数据为空，无法随机选择悬念。"
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
@@ -478,20 +485,23 @@ class DnDInfoPlugin(BasePlugin):
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
         elif msg == ".列出事件名单": # 可选：添加 .列出事件名单 命令 (如果需要列出所有事件)
-            reply = self._format_event_list() # 调用 _format_event_list 函数格式化事件列表
+            reply = self._format_event_list()
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
-        elif msg == ".列出悬念名单": # 可选：添加 .列出悬念名单 命令 (如果需要列出所有悬念)
-            reply = self._format_suspense_list() # 调用 _format_suspense_list 函数格式化悬念列表
+        elif msg == ".列出悬念名单": #  列出悬念名单命令保持启用
+            reply = self._format_suspense_list()
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
-        elif msg.startswith(".查询悬念"): # 可选：添加 .查询悬念 命令 (如果需要按名称查询悬念)
+        elif msg.startswith(".查询悬念"): #  实现 .查询悬念 命令
             suspense_name = msg[len(".查询悬念"):].strip()
             if not suspense_name:
                 reply = "请在 `.查询悬念` 命令后输入要查询的悬念名称，例如：`.查询悬念 颅骨岛的珊娜萨余党`"
             else:
-                # (这里可以实现 _find_suspense_by_name 函数，如果需要按悬念名称查询)
-                reply = "`.查询悬念` 功能暂未实现，敬请期待！" # 或者你可以实现一个 _find_suspense_by_name 函数
+                suspense_info = self._find_suspense_by_name(suspense_name) # 调用 _find_suspense_by_name 函数
+                if suspense_info:
+                    reply = self._format_suspense_info(suspense_info) # 格式化悬念信息
+                else:
+                    reply = f"未找到名为 \"{suspense_name}\" 的悬念。" #  悬念未找到的提示
             ctx.add_return("reply", [reply])
             ctx.prevent_default()
 
